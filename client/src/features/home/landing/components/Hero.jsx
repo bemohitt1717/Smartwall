@@ -10,7 +10,9 @@ const features = [
   "Upload Your Room Photo",
   "Select Walls to Paint",
   "Choose From 1000+ Colors",
-  "Preview & Download Instantly",
+  "Visualize Rooms Instantly",
+  "Compare Harmonious Tones",
+  "Save Custom Palettes",
 ];
 
 export default function Hero() {

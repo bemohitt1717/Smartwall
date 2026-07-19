@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import logo from "../../assets/icons/smartwall-logo.svg";
 
 const navItems = [
@@ -36,23 +35,28 @@ export default function Navbar() {
       <div className="container">
         <div className="mx-auto flex w-max max-w-[calc(100vw-32px)] items-center justify-center gap-[8px] md:gap-[10px]">
           {/* MOBILE NAVBAR (md:hidden) */}
-          <div className="md:hidden relative min-w-[calc(100vw-180px)]">
+          <div className="relative h-[48px] min-w-[calc(100vw-180px)] md:hidden">
             {/* Mobile Expandable Capsule */}
-            <motion.div
-              layout
-              transition={{
-                type: "spring",
-                stiffness: 300,
-                damping: 30
-              }}
-              className="flex flex-col overflow-hidden rounded-[24px] border border-slate-200/80 bg-white/85 shadow-[0_10px_24px_rgba(15,23,42,0.06)] backdrop-blur-xl"
-            >
+            <div
+              aria-hidden="true"
+              className={`pointer-events-none absolute inset-x-0 top-0 origin-top rounded-[24px] border border-slate-200/80 bg-white/[0.96] shadow-[0_10px_24px_rgba(15,23,42,0.06)] transition-transform duration-[280ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+                isColorsPage ? "h-[100px]" : "h-[236px]"
+              } ${
+                isMobileMenuOpen
+                  ? "scale-y-100"
+                  : isColorsPage
+                    ? "scale-y-[0.48]"
+                    : "scale-y-[0.2034]"
+              }`}
+            />
+
               {/* Top Row: Logo + SmartWall + Chevron (Always visible) */}
               <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="relative flex h-[48px] w-full flex-shrink-0 items-center gap-3 px-[6px] transition-colors duration-200 hover:bg-slate-50 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5464d1]/30"
+                onClick={() => setIsMobileMenuOpen((isOpen) => !isOpen)}
+                className="relative z-10 flex h-[48px] w-full flex-shrink-0 items-center gap-3 px-[6px] transition-colors duration-200 hover:bg-slate-50 active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5464d1]/30"
                 aria-label="Toggle menu"
                 aria-expanded={isMobileMenuOpen}
+                aria-controls="mobile-navigation"
               >
                 {/* Logo inside capsule */}
                 <div className="flex h-[40px] w-[40px] flex-shrink-0 items-center justify-center rounded-full border border-slate-200/80 bg-[linear-gradient(135deg,rgba(84,100,209,0.14),rgba(255,255,255,0.95))] shadow-[0_6px_14px_rgba(15,23,42,0.06)]">
@@ -99,50 +103,44 @@ export default function Navbar() {
               </button>
 
               {/* Expanded Content: Nav Links + Login (Shows when open) */}
-              <AnimatePresence initial={false}>
-                {isMobileMenuOpen && (
-                  <motion.div
-                    key="mobile-menu-content"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{
-                      height: { type: "spring", stiffness: 300, damping: 30 },
-                      opacity: { duration: 0.2 }
-                    }}
-                    style={{ willChange: "transform, opacity" }}
-                    className="px-2 pb-3 overflow-hidden"
-                  >
-                    {/* Nav Links - Hidden on Colors page */}
-                    {!isColorsPage && (
-                      <div className="flex flex-col gap-1 mb-2">
-                        {navItems.map((item) => (
-                          <a
-                            key={item.label}
-                            href={item.href}
-                            onClick={handleLinkClick}
-                            className="group relative flex items-center rounded-[14px] px-4 py-3 text-[13px] font-bold !text-slate-700 transition-all duration-200 hover:!text-[#5464d1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5464d1]/30 active:scale-95"
-                          >
-                            <span className="absolute inset-0 rounded-[14px] bg-[linear-gradient(135deg,rgba(59,130,246,0.15),rgba(37,99,235,0.08))] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
-                            <span className="relative z-10">{item.label}</span>
-                          </a>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Login Button */}
-                    <Link
-                      to="/login"
-                      onClick={handleLinkClick}
-                      className="group relative flex items-center justify-center overflow-hidden rounded-[14px] border border-slate-200/80 bg-[linear-gradient(135deg,rgba(84,100,209,0.12),rgba(255,255,255,0.95))] px-4 py-3 text-[13px] font-extrabold !text-slate-700 shadow-[0_8px_18px_rgba(84,100,209,0.08)] backdrop-blur-sm transition-all duration-200 hover:border-[#5464d1]/30 hover:!text-[#5464d1] hover:shadow-[0_8px_20px_rgba(84,100,209,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5464d1]/30 active:scale-95"
-                    >
-                      <span className="absolute inset-0 bg-[linear-gradient(120deg,transparent_15%,rgba(255,255,255,0.15)_50%,transparent_85%)] translate-x-[-140%] transition-transform duration-700 group-hover:translate-x-[140%]" />
-                      <span className="relative z-10">Login</span>
-                    </Link>
-                  </motion.div>
+              <nav
+                id="mobile-navigation"
+                aria-hidden={!isMobileMenuOpen}
+                className={`absolute left-0 top-[48px] z-10 w-full px-2 pb-3 transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+                  isMobileMenuOpen
+                    ? "translate-y-0 opacity-100"
+                    : "pointer-events-none -translate-y-2 opacity-0"
+                }`}
+              >
+                {/* Nav Links - Hidden on Colors page */}
+                {!isColorsPage && (
+                  <div className="mb-2 flex flex-col gap-1">
+                    {navItems.map((item) => (
+                      <a
+                        key={item.label}
+                        href={item.href}
+                        onClick={handleLinkClick}
+                        tabIndex={isMobileMenuOpen ? 0 : -1}
+                        className="group relative flex items-center rounded-[14px] px-4 py-3 text-[13px] font-bold !text-slate-700 transition-all duration-200 hover:!text-[#5464d1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5464d1]/30 active:scale-[0.985]"
+                      >
+                        <span className="absolute inset-0 rounded-[14px] bg-[linear-gradient(135deg,rgba(59,130,246,0.15),rgba(37,99,235,0.08))] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+                        <span className="relative z-10">{item.label}</span>
+                      </a>
+                    ))}
+                  </div>
                 )}
-              </AnimatePresence>
-            </motion.div>
+
+                {/* Login Button */}
+                <Link
+                  to="/login"
+                  onClick={handleLinkClick}
+                  tabIndex={isMobileMenuOpen ? 0 : -1}
+                  className="group relative flex items-center justify-center overflow-hidden rounded-[14px] border border-slate-200/80 bg-[linear-gradient(135deg,rgba(84,100,209,0.12),rgba(255,255,255,0.95))] px-4 py-3 text-[13px] font-extrabold !text-slate-700 shadow-[0_8px_18px_rgba(84,100,209,0.08)] transition-all duration-200 hover:border-[#5464d1]/30 hover:!text-[#5464d1] hover:shadow-[0_8px_20px_rgba(84,100,209,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5464d1]/30 active:scale-[0.985]"
+                >
+                  <span className="absolute inset-0 bg-[linear-gradient(120deg,transparent_15%,rgba(255,255,255,0.15)_50%,transparent_85%)] translate-x-[-140%] transition-transform duration-700 group-hover:translate-x-[140%]" />
+                  <span className="relative z-10">Login</span>
+                </Link>
+              </nav>
           </div>
 
           {/* DESKTOP/TABLET NAVBAR (hidden md:flex) */}
