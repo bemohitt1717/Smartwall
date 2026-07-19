@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.*
+
+# Build
+dist/
+
+# Logs
+*.log
+
+# AI editor configs
+.cursor/
+.claude/
+.codex/
+.impeccable/
+.agents/
+
+# OS
+.DS_Store
+Thumbs.db
