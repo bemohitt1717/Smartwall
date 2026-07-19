@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logo from "../../assets/icons/smartwall-logo.svg";
 
@@ -8,9 +8,13 @@ const navItems = [
   { label: "Find Your Color", href: "#colors" },
 ];
 
+const MOBILE_NAVBAR_ROW_HEIGHT = 48;
+
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mobileMenuHeight, setMobileMenuHeight] = useState(0);
+  const mobileMenuRef = useRef(null);
   const location = useLocation();
 
   // Check if we're on the Colors page
@@ -24,6 +28,37 @@ export default function Navbar() {
 
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useLayoutEffect(() => {
+    const menu = mobileMenuRef.current;
+
+    if (!menu) return undefined;
+
+    const measureMenu = () => {
+      const nextHeight = Math.ceil(menu.getBoundingClientRect().height);
+      setMobileMenuHeight((currentHeight) =>
+        currentHeight === nextHeight ? currentHeight : nextHeight,
+      );
+    };
+
+    measureMenu();
+
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", measureMenu);
+      return () => window.removeEventListener("resize", measureMenu);
+    }
+
+    const resizeObserver = new ResizeObserver(measureMenu);
+    resizeObserver.observe(menu);
+
+    return () => resizeObserver.disconnect();
+  }, [isColorsPage]);
+
+  const mobileCapsuleHeight = Math.max(
+    MOBILE_NAVBAR_ROW_HEIGHT + mobileMenuHeight,
+    MOBILE_NAVBAR_ROW_HEIGHT,
+  );
+  const mobileCapsuleScale = MOBILE_NAVBAR_ROW_HEIGHT / mobileCapsuleHeight;
 
   // Close mobile menu when clicking a link
   const handleLinkClick = () => {
@@ -39,15 +74,11 @@ export default function Navbar() {
             {/* Mobile Expandable Capsule */}
             <div
               aria-hidden="true"
-              className={`pointer-events-none absolute inset-x-0 top-0 origin-top rounded-[24px] border border-slate-200/80 bg-white/[0.96] shadow-[0_10px_24px_rgba(15,23,42,0.06)] transition-transform duration-[280ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
-                isColorsPage ? "h-[100px]" : "h-[236px]"
-              } ${
-                isMobileMenuOpen
-                  ? "scale-y-100"
-                  : isColorsPage
-                    ? "scale-y-[0.48]"
-                    : "scale-y-[0.2034]"
-              }`}
+              style={{
+                height: mobileCapsuleHeight,
+                transform: `scaleY(${isMobileMenuOpen ? 1 : mobileCapsuleScale})`,
+              }}
+              className="pointer-events-none absolute inset-x-0 top-0 origin-top rounded-[24px] border border-slate-200/80 bg-white/[0.96] shadow-[0_10px_24px_rgba(15,23,42,0.06)] transition-transform duration-[280ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
             />
 
               {/* Top Row: Logo + SmartWall + Chevron (Always visible) */}
@@ -105,6 +136,7 @@ export default function Navbar() {
               {/* Expanded Content: Nav Links + Login (Shows when open) */}
               <nav
                 id="mobile-navigation"
+                ref={mobileMenuRef}
                 aria-hidden={!isMobileMenuOpen}
                 className={`absolute left-0 top-[48px] z-10 w-full px-2 pb-3 transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
                   isMobileMenuOpen
