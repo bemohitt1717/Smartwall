@@ -1,82 +1,27 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
-  Filter,
   Grid3x3,
   List,
   Plus,
-  MoreVertical,
   Clock,
   CheckCircle,
   AlertCircle,
+  Loader as LoaderIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/Sidebar.jsx";
 import Topbar from "../../components/Topbar.jsx";
-
-const projects = [
-  {
-    id: 1,
-    name: "Scandinavian Living Room",
-    status: "completed",
-    image:
-      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=900&q=88",
-    color: "Sherwin-Williams Alabaster",
-    rooms: 3,
-    lastEdited: "2 hours ago",
-  },
-  {
-    id: 2,
-    name: "Minimalist Master Bedroom",
-    status: "in-progress",
-    image:
-      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=900&q=88",
-    color: "Benjamin Moore Indigo Breeze",
-    rooms: 1,
-    lastEdited: "Yesterday",
-  },
-  {
-    id: 3,
-    name: "Modern Kitchen Design",
-    status: "draft",
-    image:
-      "https://images.unsplash.com/photo-1556912167-f556f1f39fdf?auto=format&fit=crop&w=900&q=88",
-    color: "Farrow & Ball Sage Green",
-    rooms: 2,
-    lastEdited: "3 days ago",
-  },
-  {
-    id: 4,
-    name: "Architect's Home Office",
-    status: "completed",
-    image:
-      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=88",
-    color: "Sherwin-Williams Iron Ore",
-    rooms: 1,
-    lastEdited: "1 week ago",
-  },
-  {
-    id: 5,
-    name: "Cozy Family Room",
-    status: "in-progress",
-    image:
-      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=900&q=88",
-    color: "Benjamin Moore Simply White",
-    rooms: 2,
-    lastEdited: "2 days ago",
-  },
-  {
-    id: 6,
-    name: "Luxury Master Suite",
-    status: "draft",
-    image:
-      "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=900&q=88",
-    color: "Behr Cotton Grey",
-    rooms: 3,
-    lastEdited: "5 days ago",
-  },
-];
+import ProjectMenu from "./components/ProjectMenu.jsx";
+import DeleteConfirmDialog from "./components/DeleteConfirmDialog.jsx";
+import RenameDialog from "./components/RenameDialog.jsx";
+import {
+  getProjects,
+  deleteProject,
+  saveProject,
+} from "../../../../api/project.api.js";
+import toast from "react-hot-toast";
 
 const statusConfig = {
   completed: {
@@ -99,12 +44,154 @@ const statusConfig = {
 export default function Projects() {
   const [viewMode, setViewMode] = useState("grid");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [renameName, setRenameName] = useState("");
   const navigate = useNavigate();
 
-  const filteredProjects =
-    filterStatus === "all"
-      ? projects
-      : projects.filter((p) => p.status === filterStatus);
+  /**
+   * Fetch projects from backend
+   */
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+        const response = await getProjects();
+        setProjects(response.projects || []);
+        setError(null);
+      } catch (error) {
+        console.error("Failed to fetch projects:", error);
+        setError("Failed to load projects");
+        setProjects([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  const openDeleteDialog = (project) => {
+    setSelectedProject(project);
+    setShowDeleteDialog(true);
+  };
+
+  const closeDeleteDialog = () => {
+    setSelectedProject(null);
+    setShowDeleteDialog(false);
+    setIsDeleting(false);
+  };
+
+  const confirmDeleteProject = async () => {
+    if (!selectedProject) return;
+
+    try {
+      setIsDeleting(true);
+      await deleteProject(selectedProject._id);
+      setProjects((prev) => prev.filter((p) => p._id !== selectedProject._id));
+      toast.success("Project deleted successfully");
+      closeDeleteDialog();
+    } catch (error) {
+      console.error("Failed to delete project:", error);
+      toast.error("Failed to delete project");
+      setIsDeleting(false);
+    }
+  };
+
+  const openRenameDialog = (project) => {
+    setSelectedProject(project);
+    setRenameName(project.name || "");
+    setShowRenameDialog(true);
+  };
+
+  const closeRenameDialog = () => {
+    setSelectedProject(null);
+    setRenameName("");
+    setShowRenameDialog(false);
+    setIsRenaming(false);
+  };
+
+  const confirmRenameProject = async (newName) => {
+    if (!selectedProject || !newName.trim()) return;
+
+    try {
+      setIsRenaming(true);
+      const response = await saveProject(selectedProject._id, {
+        name: newName.trim(),
+      });
+      setProjects((prev) =>
+        prev.map((project) =>
+          project._id === selectedProject._id ? response.project : project,
+        ),
+      );
+      toast.success("Project renamed successfully");
+      closeRenameDialog();
+    } catch (error) {
+      console.error("Failed to rename project:", error);
+      toast.error("Failed to rename project");
+      setIsRenaming(false);
+    }
+  };
+
+  /**
+   * Open project in editor
+   */
+  const handleOpenProject = (projectId) => {
+    navigate("/editor", {
+      state: { projectId },
+    });
+  };
+
+  /**
+   * Format date for display
+   */
+  const formatDate = (dateString) => {
+    if (!dateString) return "Unknown";
+
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 60) return `${diffMins} min${diffMins !== 1 ? "s" : ""} ago`;
+    if (diffHours < 24)
+      return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
+
+    return date.toLocaleDateString();
+  };
+
+  /**
+   * Get project image URL (prefer edited, fallback to original)
+   */
+  const getProjectImage = (project) => {
+    return (
+      project.editedImage?.url ||
+      project.originalImage?.url ||
+      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=900&q=88"
+    );
+  };
+
+  /**
+   * Filter projects by status and search query
+   */
+  const filteredProjects = projects.filter((project) => {
+    const matchesStatus =
+      filterStatus === "all" || project.status === filterStatus;
+    const matchesSearch = project.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -131,6 +218,8 @@ export default function Projects() {
                 <input
                   type="text"
                   placeholder="Search projects..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
@@ -189,39 +278,93 @@ export default function Projects() {
             </div>
 
             {/* Projects Grid/List */}
-            {viewMode === "grid" ? (
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="text-center">
+                  <LoaderIcon className="size-12 text-indigo-600 animate-spin mx-auto mb-4" />
+                  <p className="text-slate-600">Loading projects...</p>
+                </div>
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="text-center">
+                  <AlertCircle className="size-12 text-red-600 mx-auto mb-4" />
+                  <p className="text-slate-900 font-semibold mb-2">
+                    Failed to load projects
+                  </p>
+                  <p className="text-slate-600">{error}</p>
+                </div>
+              </div>
+            ) : filteredProjects.length === 0 ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="text-center">
+                  <div className="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                    <Plus className="size-10 text-slate-400" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">
+                    No projects yet
+                  </h3>
+                  <p className="text-slate-600 mb-4">
+                    {searchQuery || filterStatus !== "all"
+                      ? "No projects match your filters"
+                      : "Create your first project to get started"}
+                  </p>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => navigate("/editor")}
+                    className="px-6 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors"
+                    type="button"
+                  >
+                    Create Project
+                  </motion.button>
+                </div>
+              </div>
+            ) : viewMode === "grid" ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProjects.map((project, index) => (
                   <motion.div
-                    key={project.id}
+                    key={project._id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="group bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-all duration-300"
+                    onClick={() => handleOpenProject(project._id)}
+                    className="group bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-all duration-300 cursor-pointer"
                   >
                     <div className="relative h-48 overflow-hidden bg-slate-100">
                       <img
-                        src={project.image}
+                        src={getProjectImage(project)}
                         alt={project.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute top-3 right-3">
-                        <button
-                          className="p-2 rounded-lg bg-white/90 backdrop-blur-sm hover:bg-white transition-colors"
-                          type="button"
-                        >
-                          <MoreVertical className="size-4 text-slate-600" />
-                        </button>
+                        <ProjectMenu
+                          onRename={(e) => {
+                            e?.stopPropagation?.();
+                            openRenameDialog(project);
+                          }}
+                          onDelete={(e) => {
+                            e?.stopPropagation?.();
+                            openDeleteDialog(project);
+                          }}
+                        />
                       </div>
                       <div className="absolute top-3 left-3">
                         {(() => {
-                          const StatusIcon = statusConfig[project.status].icon;
+                          const StatusIcon =
+                            statusConfig[project.status]?.icon || AlertCircle;
+                          const statusStyle =
+                            statusConfig[project.status]?.color ||
+                            "text-slate-600 bg-slate-100";
+                          const statusLabel =
+                            statusConfig[project.status]?.label ||
+                            project.status;
                           return (
                             <span
-                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${statusConfig[project.status].color}`}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${statusStyle}`}
                             >
                               <StatusIcon className="size-3.5" />
-                              {statusConfig[project.status].label}
+                              {statusLabel}
                             </span>
                           );
                         })()}
@@ -232,14 +375,13 @@ export default function Projects() {
                         {project.name}
                       </h3>
                       <p className="text-sm text-slate-600 mb-3 line-clamp-1">
-                        {project.color}
+                        {project.editorState?.walls?.length || 0} wall
+                        {project.editorState?.walls?.length !== 1 ? "s" : ""}{" "}
+                        painted
                       </p>
                       <div className="flex items-center justify-between text-xs text-slate-500">
-                        <span>
-                          {project.rooms}{" "}
-                          {project.rooms === 1 ? "room" : "rooms"}
-                        </span>
-                        <span>{project.lastEdited}</span>
+                        <span>ID: {project._id.slice(-6)}</span>
+                        <span>{formatDate(project.updatedAt)}</span>
                       </div>
                     </div>
                   </motion.div>
@@ -249,14 +391,15 @@ export default function Projects() {
               <div className="space-y-3">
                 {filteredProjects.map((project, index) => (
                   <motion.div
-                    key={project.id}
+                    key={project._id}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="flex items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 hover:shadow-md transition-all"
+                    onClick={() => handleOpenProject(project._id)}
+                    className="flex items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 hover:shadow-md transition-all cursor-pointer"
                   >
                     <img
-                      src={project.image}
+                      src={getProjectImage(project)}
                       alt={project.name}
                       className="w-16 h-16 rounded-lg object-cover"
                     />
@@ -265,30 +408,42 @@ export default function Projects() {
                         {project.name}
                       </h3>
                       <p className="text-sm text-slate-600 truncate">
-                        {project.color}
+                        {project.editorState?.walls?.length || 0} wall
+                        {project.editorState?.walls?.length !== 1 ? "s" : ""}{" "}
+                        painted
                       </p>
                     </div>
                     <div className="flex items-center gap-4">
                       {(() => {
-                        const StatusIcon = statusConfig[project.status].icon;
+                        const StatusIcon =
+                          statusConfig[project.status]?.icon || AlertCircle;
+                        const statusStyle =
+                          statusConfig[project.status]?.color ||
+                          "text-slate-600 bg-slate-100";
+                        const statusLabel =
+                          statusConfig[project.status]?.label || project.status;
                         return (
                           <span
-                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${statusConfig[project.status].color}`}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${statusStyle}`}
                           >
                             <StatusIcon className="size-3.5" />
-                            {statusConfig[project.status].label}
+                            {statusLabel}
                           </span>
                         );
                       })()}
                       <span className="text-sm text-slate-500 hidden md:block">
-                        {project.lastEdited}
+                        {formatDate(project.updatedAt)}
                       </span>
-                      <button
-                        className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
-                        type="button"
-                      >
-                        <MoreVertical className="size-4 text-slate-600" />
-                      </button>
+                      <ProjectMenu
+                        onRename={(e) => {
+                          e?.stopPropagation?.();
+                          openRenameDialog(project);
+                        }}
+                        onDelete={(e) => {
+                          e?.stopPropagation?.();
+                          openDeleteDialog(project);
+                        }}
+                      />
                     </div>
                   </motion.div>
                 ))}
@@ -297,6 +452,22 @@ export default function Projects() {
           </div>
         </main>
       </div>
+
+      <DeleteConfirmDialog
+        show={showDeleteDialog}
+        projectName={selectedProject?.name}
+        onConfirm={confirmDeleteProject}
+        onCancel={closeDeleteDialog}
+        isDeleting={isDeleting}
+      />
+
+      <RenameDialog
+        show={showRenameDialog}
+        currentName={renameName}
+        onConfirm={confirmRenameProject}
+        onCancel={closeRenameDialog}
+        isRenaming={isRenaming}
+      />
     </div>
   );
 }

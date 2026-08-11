@@ -1,11 +1,15 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Upload, Image as ImageIcon } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { uploadImage } from "../../../api/project.api.js";
 
 export default function CreateProjectModal({ isOpen, onClose }) {
   const [projectName, setProjectName] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const navigate = useNavigate();
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
@@ -19,23 +23,43 @@ export default function CreateProjectModal({ isOpen, onClose }) {
     }
   };
 
-  const handleCreate = () => {
-    // Logic will be handled by user
-    console.log("Project Name:", projectName);
-    console.log("Selected Image:", selectedImage);
-    
-    // Close modal after creation
-    onClose();
-    
-    // Reset form
-    setProjectName("");
-    setSelectedImage(null);
-    setImagePreview(null);
+  const handleCreate = async () => {
+    if (!projectName || !selectedImage) return;
+
+    try {
+      setIsCreating(true);
+
+      const formData = new FormData();
+      formData.append("image", selectedImage);
+      formData.append("name", projectName);
+
+      const response = await uploadImage(formData);
+
+      setIsCreating(false);
+      setProjectName("");
+      setSelectedImage(null);
+      setImagePreview(null);
+      onClose();
+
+      navigate("/editor", {
+        state: {
+          projectId: response.project._id,
+          image: {
+            preview: response.project.originalImage.url,
+            name: selectedImage.name,
+            size: selectedImage.size,
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Failed to create project:", error);
+      alert("Failed to create project. Please try again.");
+      setIsCreating(false);
+    }
   };
 
   const handleClose = () => {
     onClose();
-    // Reset form
     setProjectName("");
     setSelectedImage(null);
     setImagePreview(null);
@@ -103,16 +127,17 @@ export default function CreateProjectModal({ isOpen, onClose }) {
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
                     Upload Room Image
                   </label>
-                  
+
                   {/* Upload Area */}
                   <label
                     htmlFor="imageUpload"
                     className={`
                       relative block w-full rounded-xl border-2 border-dashed cursor-pointer
                       transition-all overflow-hidden
-                      ${imagePreview 
-                        ? 'border-indigo-500 bg-indigo-50/30' 
-                        : 'border-slate-300 hover:border-indigo-400 hover:bg-slate-50'
+                      ${
+                        imagePreview
+                          ? "border-indigo-500 bg-indigo-50/30"
+                          : "border-slate-300 hover:border-indigo-400 hover:bg-slate-50"
                       }
                     `}
                   >
@@ -134,7 +159,10 @@ export default function CreateProjectModal({ isOpen, onClose }) {
                       // Upload Placeholder
                       <div className="flex flex-col items-center justify-center py-8 px-4">
                         <div className="w-14 h-14 rounded-xl bg-indigo-50 flex items-center justify-center mb-3">
-                          <ImageIcon className="size-7 text-indigo-600" strokeWidth={1.5} />
+                          <ImageIcon
+                            className="size-7 text-indigo-600"
+                            strokeWidth={1.5}
+                          />
                         </div>
                         <p className="text-sm font-semibold text-slate-700 mb-1">
                           Click to upload image
@@ -168,20 +196,51 @@ export default function CreateProjectModal({ isOpen, onClose }) {
                   Cancel
                 </motion.button>
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: isCreating ? 1 : 1.02 }}
+                  whileTap={{ scale: isCreating ? 1 : 0.98 }}
                   onClick={handleCreate}
-                  disabled={!projectName || !selectedImage}
+                  disabled={!projectName || !selectedImage || isCreating}
+                  aria-busy={isCreating}
                   className={`
-                    px-5 py-2.5 rounded-xl font-semibold transition-all
-                    ${projectName && selectedImage
-                      ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/30'
-                      : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    px-5 py-2.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-3
+                    ${
+                      projectName && selectedImage && !isCreating
+                        ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/30"
+                        : isCreating
+                          ? "bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white shadow-lg shadow-indigo-600/30 pointer-events-none"
+                          : "bg-slate-200 text-slate-400 cursor-not-allowed"
                     }
                   `}
                   type="button"
                 >
-                  Create Project
+                  {isCreating ? (
+                    <>
+                      <svg
+                        className="animate-spin h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                        ></path>
+                      </svg>
+                      <span>Creating…</span>
+                    </>
+                  ) : (
+                    "Create Project"
+                  )}
                 </motion.button>
               </div>
             </motion.div>

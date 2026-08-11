@@ -1,35 +1,37 @@
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "../../../context/authContext.jsx";
 import helloVideo from "../../../assets/video/Waving.svg";
 import CreateProjectModal from "./CreateProjectModal.jsx";
 
 const reducedMotion = {
   initial: { opacity: 0 },
   animate: { opacity: 1 },
-  transition: { duration: 0.2 }
+  transition: { duration: 0.2 },
 };
 
 const fullMotion = {
   image: {
     initial: { opacity: 0, scale: 0.95 },
     animate: { opacity: 1, scale: 1 },
-    transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] }
+    transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
   },
   text: {
     initial: { opacity: 0, y: 12 },
     animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] }
+    transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
   },
   button: {
     initial: { opacity: 0, x: 12 },
     animate: { opacity: 1, x: 0 },
-    transition: { duration: 0.4, delay: 0.15, ease: [0.16, 1, 0.3, 1] }
-  }
+    transition: { duration: 0.4, delay: 0.15, ease: [0.16, 1, 0.3, 1] },
+  },
 };
 
 export default function Greeting() {
   const [showModal, setShowModal] = useState(false);
+  const { user } = useAuth();
 
   return (
     <>
@@ -52,12 +54,12 @@ export default function Greeting() {
             </motion.div>
 
             {/* Text Content */}
-            <motion.div
-              {...fullMotion.text}
-              className="flex-1"
-            >
-              <h1 className="text-3xl md:text-4xl font-bold leading-[1.15] md:mt-20 tracking-[-0.02em] text-slate-900" style={{ textWrap: 'balance' }}>
-                Welcome back, Mohit
+            <motion.div {...fullMotion.text} className="flex-1">
+              <h1
+                className="text-3xl md:text-4xl font-bold leading-[1.15] md:mt-20 tracking-[-0.02em] text-slate-900"
+                style={{ textWrap: "balance" }}
+              >
+                Welcome back{user?.fullName ? `, ${user.fullName}` : ""}
               </h1>
               <p className="mt-3 text-base md:text-lg text-slate-700 leading-relaxed max-w-[65ch]">
                 Upload a room image to start visualizing paint colors instantly.
@@ -82,9 +84,9 @@ export default function Greeting() {
       </section>
 
       {/* Create Project Modal */}
-      <CreateProjectModal 
-        isOpen={showModal} 
-        onClose={() => setShowModal(false)} 
+      <CreateProjectModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
       />
     </>
   );

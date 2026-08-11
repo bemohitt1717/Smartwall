@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
 import {
   User,
   Bell,
@@ -13,6 +15,8 @@ import {
 } from "lucide-react";
 import Sidebar from "../../components/Sidebar.jsx";
 import Topbar from "../../components/Topbar.jsx";
+import { useAuth } from "../../../../context/authContext.jsx";
+import guestAvatar from "../../../../assets/images/user.png";
 
 const settingsTabs = [
   { id: "profile", label: "Profile", icon: User },
@@ -26,10 +30,43 @@ const settingsTabs = [
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile");
   const [saved, setSaved] = useState(false);
+  const { user, updateUser } = useAuth();
+
+  const { register, handleSubmit, reset } = useForm({
+    defaultValues: {
+      fullName: "",
+      bio: "",
+    },
+  });
+
+  useEffect(() => {
+    if (user) {
+      reset({
+        fullName: user.fullName || "",
+        bio: user.bio || "",
+      });
+    }
+  }, [user, reset]);
 
   const handleSave = () => {
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
+  };
+
+  const onSubmitProfile = async (data) => {
+    try {
+      const response = await updateUser({
+        fullName: data.fullName,
+        bio: data.bio,
+      });
+      setSaved(true);
+      toast.success("Profile updated successfully");
+      reset({ fullName: response.user.fullName, bio: response.user.bio || "" });
+      setTimeout(() => setSaved(false), 3000);
+    } catch (error) {
+      console.error("[Settings] Profile update failed", error);
+      toast.error(error.response?.data?.message || "Could not update profile");
+    }
   };
 
   return (
@@ -94,7 +131,7 @@ export default function Settings() {
                           </label>
                           <div className="flex items-center gap-4">
                             <img
-                              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=128&q=88"
+                              src={user?.profileImage || guestAvatar}
                               alt="Profile"
                               className="size-20 rounded-full object-cover ring-2 ring-slate-200"
                             />
@@ -110,27 +147,15 @@ export default function Settings() {
                         </div>
 
                         {/* Name */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                              First Name
-                            </label>
-                            <input
-                              type="text"
-                              defaultValue="Mohit"
-                              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                              Last Name
-                            </label>
-                            <input
-                              type="text"
-                              defaultValue="Sharma"
-                              className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            />
-                          </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            Full Name
+                          </label>
+                          <input
+                            type="text"
+                            {...register("fullName")}
+                            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          />
                         </div>
 
                         {/* Email */}
@@ -139,9 +164,10 @@ export default function Settings() {
                             Email Address
                           </label>
                           <input
+                            readOnly
                             type="email"
-                            defaultValue="mohit@smartwall.com"
-                            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            defaultValue={user?.email || ""}
+                            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50"
                           />
                         </div>
 
@@ -154,7 +180,7 @@ export default function Settings() {
                             rows={4}
                             placeholder="Tell us about yourself..."
                             className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                            defaultValue="Interior design enthusiast passionate about creating beautiful living spaces."
+                            {...register("bio")}
                           />
                         </div>
                       </div>
@@ -316,7 +342,11 @@ export default function Settings() {
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={handleSave}
+                      onClick={
+                        activeTab === "profile"
+                          ? handleSubmit(onSubmitProfile)
+                          : handleSave
+                      }
                       className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors"
                       type="button"
                     >

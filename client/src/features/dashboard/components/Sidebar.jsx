@@ -11,11 +11,17 @@ import {
   X,
   SquarePen,
 } from "lucide-react";
+import { useAuth } from "../../../context/authContext.jsx";
 import logo from "../../../assets/icons/smartwall-logo.svg";
 
 const menuItems = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-  {id:"editor", label:"editor", icon : SquarePen, path:"/editor"},
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    path: "/dashboard",
+  },
+  { id: "editor", label: "editor", icon: SquarePen, path: "/editor" },
   { id: "projects", label: "Projects", icon: FolderKanban, path: "/projects" },
   { id: "colors", label: "Colors", icon: Palette, path: "/colors-dashboard" },
   { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
@@ -24,6 +30,7 @@ const menuItems = [
 export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
@@ -34,7 +41,7 @@ export default function Sidebar() {
     if (path === "/projects") return "projects";
     if (path === "/settings") return "settings";
     if (path === "/editor") return "editor";
-    const found = menuItems.find(item => item.path === path);
+    const found = menuItems.find((item) => item.path === path);
     return found ? found.id : "dashboard";
   };
 
@@ -45,6 +52,7 @@ export default function Sidebar() {
   };
 
   const confirmLogout = () => {
+    logout();
     navigate("/login");
     setShowLogoutModal(false);
     setMobileOpen(false);
@@ -85,7 +93,7 @@ export default function Sidebar() {
         className={`
           fixed inset-y-0 left-0 z-40 w-64 md:w-72 bg-white border-r-2 border-slate-200 flex flex-col shadow-md
           transition-transform duration-300 ease-in-out
-          ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
       >
         {/* Logo */}
@@ -96,11 +104,13 @@ export default function Sidebar() {
             className="flex items-center gap-3 select-none group"
           >
             <div className="relative flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 p-2 shadow-md transition-transform duration-200 group-hover:scale-105">
-              <img alt="SmartWall" className="w-full h-full object-contain" src={logo} />
+              <img
+                alt="SmartWall"
+                className="w-full h-full object-contain"
+                src={logo}
+              />
             </div>
-            <span className="text-xl font-bold text-slate-900">
-              SmartWall
-            </span>
+            <span className="text-xl font-bold text-slate-900">SmartWall</span>
           </Link>
         </div>
 
@@ -146,7 +156,9 @@ export default function Sidebar() {
                     className="size-5 flex-shrink-0"
                     strokeWidth={isActive ? 2 : 1.5}
                   />
-                  <span className={`text-sm font-medium ${isActive ? "font-semibold" : ""}`}>
+                  <span
+                    className={`text-sm font-medium ${isActive ? "font-semibold" : ""}`}
+                  >
                     {item.label}
                   </span>
                 </motion.div>
@@ -202,7 +214,8 @@ export default function Sidebar() {
                       Confirm Logout
                     </h3>
                     <p className="text-slate-700 leading-relaxed">
-                      Are you sure you want to logout? Any unsaved changes will be lost.
+                      Are you sure you want to logout? Any unsaved changes will
+                      be lost.
                     </p>
                   </div>
                 </div>

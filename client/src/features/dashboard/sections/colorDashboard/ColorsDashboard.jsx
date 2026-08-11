@@ -209,30 +209,7 @@ export default function ColorsDashboard() {
               </div>
             </div>
 
-            {/* Color Picker Section */}
-            <div className="mt-12 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-8 border border-indigo-100">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 rounded-xl bg-white shadow-md">
-                  <Palette className="size-6 text-indigo-600" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900">
-                    Custom Color Picker
-                  </h2>
-                  <p className="text-slate-600">
-                    Create your own perfect color palette
-                  </p>
-                </div>
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="px-6 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors"
-                type="button"
-              >
-                Launch Color Picker
-              </motion.button>
-            </div>
+            {/* Color Picker removed — streamlined UI for this view */}
           </div>
         </main>
       </div>
