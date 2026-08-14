@@ -376,7 +376,7 @@ This project is licensed under the MIT License - feel free to use it for persona
 ## 👤 Author
 
 **Mohit**
-- GitHub: [@yourusername](https://github.com/bemohitt1717)
+- GitHub: [@bemohitt1717](https://github.com/bemohitt1717)
 - Project: [SmartWall](https://smartwall.vercel.app/)
 
 ---
