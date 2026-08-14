@@ -145,15 +145,9 @@ export default function LoginForm() {
    * Handle form submission (Login/Register)
    */
   const onSubmit = async (values) => {
-    console.log("🔵 [LoginForm] Form submitted:", {
-      mode,
-      values: { ...values, password: "***" },
-    });
-
     const parsed = schemas[mode].safeParse(values);
 
     if (!parsed.success) {
-      console.log("❌ [LoginForm] Validation failed:", parsed.error.issues);
       parsed.error.issues.forEach((issue) => {
         const field = issue.path[0];
         setError(field, { message: issue.message });
@@ -163,15 +157,12 @@ export default function LoginForm() {
 
     try {
       if (mode === "signup") {
-        console.log("🔵 [LoginForm] Calling registerUser API...");
-
         const response = await registerUser({
           fullName: values.name,
           email: values.email,
           password: values.password,
         });
 
-        console.log("✅ [LoginForm] Registration successful:", response);
         toast.success("Account created! Signing you in...");
 
         const loginResponse = await loginUser({
@@ -181,42 +172,29 @@ export default function LoginForm() {
 
         localStorage.setItem("token", loginResponse.token);
         await loadProfile();
-        console.log(
-          "✅ [LoginForm] Token stored and profile loaded after signup",
-        );
 
         navigate("/dashboard");
         return;
       } else if (mode === "login") {
-        console.log("🔵 [LoginForm] Calling loginUser API...");
-
         const response = await loginUser({
           email: values.email,
           password: values.password,
         });
 
-        console.log("✅ [LoginForm] Login successful:", response);
-
         localStorage.setItem("token", response.token);
         await loadProfile();
-        console.log("✅ [LoginForm] Token stored and profile loaded");
 
         toast.success("Welcome back!");
 
-        console.log("🔵 [LoginForm] Navigating to /dashboard");
         navigate("/dashboard");
       } else if (mode === "forgot") {
-        console.log("⚠️ [LoginForm] Forgot password not implemented yet");
         toast.error("Password reset not implemented yet");
       }
     } catch (error) {
-      console.error("❌ [LoginForm] API Error:", error);
-
       const errorMessage =
         error.response?.data?.message ||
         error.message ||
         "Something went wrong";
-      console.error("❌ [LoginForm] Error message:", errorMessage);
 
       toast.error(errorMessage);
 
@@ -235,25 +213,16 @@ export default function LoginForm() {
    * Handle Google Login
    */
   const handleGoogleSuccess = async (credentialResponse) => {
-    console.log("🔵 [LoginForm] Google login credential received");
-
     try {
-      console.log("🔵 [LoginForm] Calling googleLogin API...");
-
       const response = await googleLogin(credentialResponse.credential);
-
-      console.log("✅ [LoginForm] Google login successful:", response);
 
       localStorage.setItem("token", response.token);
       await loadProfile();
-      console.log("✅ [LoginForm] Token stored and profile loaded");
 
       toast.success("Welcome!");
 
-      console.log("🔵 [LoginForm] Navigating to /dashboard");
       navigate("/dashboard");
     } catch (error) {
-      console.error("❌ [LoginForm] Google login error:", error);
       const errorMessage =
         error.response?.data?.message || "Google login failed";
       toast.error(errorMessage);
@@ -261,7 +230,6 @@ export default function LoginForm() {
   };
 
   const handleGoogleError = () => {
-    console.error("❌ [LoginForm] Google login failed");
     toast.error("Google login failed");
   };
 
@@ -345,37 +313,42 @@ export default function LoginForm() {
           >
             {mode !== "forgot" ? (
               <>
-                <div className="space-y-3">
-                  <GoogleLogin
-                    onSuccess={handleGoogleSuccess}
-                    onError={handleGoogleError}
-                    useOneTap
-                    render={(renderProps) => (
-                      <button
-                        type="button"
-                        onClick={renderProps.onClick}
-                        disabled={renderProps.disabled}
-                        className="group flex h-14 w-full items-center justify-center gap-3 rounded-[18px] border border-[#dcd7dc] bg-white px-5 text-[15px] font-semibold tracking-[-0.015em] text-[#211d22] shadow-sm transition-[background-color,border-color,box-shadow] duration-200 hover:border-[#a69aa8] hover:bg-[#faf7fb] disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        <span className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-[#f8f7f9] shadow-sm">
-                          <GoogleMark />
-                        </span>
-                        <span className="text-[15px] font-semibold text-[#1f1b20]">
-                          {mode === "login"
-                            ? "Continue with Google"
-                            : "Create account with Google"}
-                        </span>
-                      </button>
-                    )}
-                  />
+                <div className="relative">
+                  {/* Hidden default Google button - preserves all OAuth functionality */}
+                  <div className="pointer-events-auto absolute inset-0 z-10 opacity-0">
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={handleGoogleError}
+                      useOneTap
+                      width="100%"
+                      size="large"
+                      theme="outline"
+                      shape="rectangular"
+                    />
+                  </div>
+
+                  {/* Custom styled overlay - blends with theme */}
+                  <div
+                    className="relative z-0 group flex h-14 w-full items-center justify-center gap-3 rounded-[12px] border border-[#ddd7da] bg-[#fffefe] px-4 text-[15px] tracking-[-0.01em] text-[#211d22] outline-none transition-all duration-150 ease-out hover:border-[#6e4d82] hover:bg-white hover:shadow-[0_4px_16px_rgba(110,77,130,0.12)] focus-within:border-[#6e4d82] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#6e4d82]/12 active:scale-[0.97] active:shadow-[0_2px_6px_rgba(110,77,130,0.08)] cursor-pointer"
+                    role="button"
+                    tabIndex={-1}
+                    aria-label={mode === "login" ? "Sign in with Google" : "Sign up with Google"}
+                  >
+                    <span className="flex h-[20px] w-[20px] shrink-0 items-center justify-center transition-transform duration-150 ease-out group-hover:scale-110 group-active:scale-90">
+                      <GoogleMark />
+                    </span>
+                    <span className="text-[15px] font-medium tracking-[-0.01em] text-[#211d22] transition-all duration-150 ease-out group-hover:text-[#6e4d82] group-hover:font-semibold">
+                      {mode === "login"
+                        ? "Continue with Google"
+                        : "Sign up with Google"}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-3 text-[13px] font-medium text-[#716970]">
-                  <span className="flex-1 h-px bg-[#e5e1e4]" />
-                  <span className="whitespace-nowrap">
-                    or continue with email
-                  </span>
-                  <span className="flex-1 h-px bg-[#e5e1e4]" />
+                  <span className="h-px flex-1 bg-[#e5e1e4]" />
+                  <span className="whitespace-nowrap">or continue with email</span>
+                  <span className="h-px flex-1 bg-[#e5e1e4]" />
                 </div>
               </>
             ) : null}
