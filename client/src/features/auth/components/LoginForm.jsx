@@ -315,7 +315,7 @@ export default function LoginForm() {
               <>
                 <div className="relative">
                   {/* Hidden default Google button - preserves all OAuth functionality */}
-                  <div className="pointer-events-auto absolute inset-0 z-10 opacity-0">
+                  <div className="google-login-hit-area pointer-events-auto absolute inset-0 z-10 opacity-0">
                     <GoogleLogin
                       onSuccess={handleGoogleSuccess}
                       onError={handleGoogleError}
@@ -332,7 +332,11 @@ export default function LoginForm() {
                     className="relative z-0 group flex h-14 w-full items-center justify-center gap-3 rounded-[12px] border border-[#ddd7da] bg-[#fffefe] px-4 text-[15px] tracking-[-0.01em] text-[#211d22] outline-none transition-all duration-150 ease-out hover:border-[#6e4d82] hover:bg-white hover:shadow-[0_4px_16px_rgba(110,77,130,0.12)] focus-within:border-[#6e4d82] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#6e4d82]/12 active:scale-[0.97] active:shadow-[0_2px_6px_rgba(110,77,130,0.08)] cursor-pointer"
                     role="button"
                     tabIndex={-1}
-                    aria-label={mode === "login" ? "Sign in with Google" : "Sign up with Google"}
+                    aria-label={
+                      mode === "login"
+                        ? "Sign in with Google"
+                        : "Sign up with Google"
+                    }
                   >
                     <span className="flex h-[20px] w-[20px] shrink-0 items-center justify-center transition-transform duration-150 ease-out group-hover:scale-110 group-active:scale-90">
                       <GoogleMark />
@@ -347,7 +351,9 @@ export default function LoginForm() {
 
                 <div className="flex items-center gap-3 text-[13px] font-medium text-[#716970]">
                   <span className="h-px flex-1 bg-[#e5e1e4]" />
-                  <span className="whitespace-nowrap">or continue with email</span>
+                  <span className="whitespace-nowrap">
+                    or continue with email
+                  </span>
                   <span className="h-px flex-1 bg-[#e5e1e4]" />
                 </div>
               </>
