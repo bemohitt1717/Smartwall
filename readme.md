@@ -294,6 +294,13 @@ The core feature where magic happens:
 4. Build command: `npm install`
 5. Start command: `npm start`
 6. Deploy from `server` directory
+7. Set the Render health check path to `/health/ready`
+
+The backend exposes `/health/live` for process liveness and `/health/ready` for
+readiness (including MongoDB connectivity). Render's free instance can sleep
+after inactivity; health checks report status but do not keep a free instance
+awake. Use an always-on plan if avoiding cold starts is a production
+requirement.
 
 ### Important: Update CORS
 After deployment, update `server/app.js` with your frontend URL in CORS origins.

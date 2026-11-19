@@ -1,4 +1,5 @@
 import api from "./axios.js";
+import { prepareImageForUpload } from "../features/upload/utils/prepareImage.js";
 
 /**
  * Upload image and create new project
@@ -6,7 +7,17 @@ import api from "./axios.js";
  * @returns {Promise} Project creation response
  */
 export const uploadImage = async (data) => {
-  const response = await api.post("/project/create", data);
+  const image = data.get("image");
+  const preparedImage = image instanceof File
+    ? await prepareImageForUpload(image)
+    : image;
+  const uploadData = new FormData();
+
+  for (const [key, value] of data.entries()) {
+    uploadData.append(key, key === "image" ? preparedImage : value);
+  }
+
+  const response = await api.post("/project/create", uploadData);
   return response.data;
 }
 

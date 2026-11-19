@@ -441,7 +441,7 @@ export default function useCanvaEditor(image) {
     const canvas = canvasRef.current;
     if (!canvas || !image?.preview) return;
 
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const ctx = canvas.getContext("2d");
     contextRef.current = ctx;
 
     const img = new Image();

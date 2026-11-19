@@ -1,5 +1,6 @@
 import express from "express";
-import indexRoute from "./routes/index.routes.js"
+import mongoose from "mongoose";
+import indexRoute from "./routes/index.routes.js";
 import cors from "cors";
 import morgan from "morgan";
 
@@ -33,6 +34,19 @@ app.use(cors({
 app.use(morgan("dev"));
 
 app.use(express.json());
+
+app.get("/health/live", (req, res) => {
+    res.status(200).json({ status: "alive" });
+});
+
+app.get("/health/ready", (req, res) => {
+    const isDatabaseConnected = mongoose.connection.readyState === 1;
+
+    res.status(isDatabaseConnected ? 200 : 503).json({
+        status: isDatabaseConnected ? "ready" : "not_ready",
+        database: isDatabaseConnected ? "connected" : "disconnected",
+    });
+});
 
 app.use("/api", indexRoute);
 

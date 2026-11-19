@@ -36,6 +36,7 @@ export const createProject = async (req, res) => {
       project,
     });
   } catch (err) {
+    console.error("Project creation failed:", err);
     return res.status(500).json({
       success: false,
       message: "Internal server error",
