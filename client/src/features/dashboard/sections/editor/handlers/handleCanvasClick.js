@@ -48,17 +48,17 @@ export function createCanvasClickHandler({
         
         setIsDrawing(false);
         
-        // Create draft wall immediately
-        const newDraftWall = {
+        // Save the completed wall immediately so project auto-save can persist it.
+        const newWall = {
           id: generateId(),
           name: generateWallName(walls, draftWall),
           points: [...currentPoints],
           color: previewColor,
           opacity: previewOpacity,
-          isDraft: true,
         };
-        setDraftWall(newDraftWall);
-        setSelectedWallId(newDraftWall.id);
+        setWalls((prev) => [...prev, newWall]);
+        setDraftWall(null);
+        setSelectedWallId(newWall.id);
         setCurrentPoints([]);
         
         // Automatically switch to SELECT mode after polygon closes

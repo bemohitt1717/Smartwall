@@ -3,9 +3,11 @@ import mongoose from "mongoose";
 import indexRoute from "./routes/index.routes.js";
 import cors from "cors";
 import morgan from "morgan";
+import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
 
 const app = express();
 
+app.set("trust proxy", 1);
 
 app.use(cors({
     origin: function (origin, callback) {
@@ -33,7 +35,7 @@ app.use(cors({
 
 app.use(morgan("dev"));
 
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 
 app.get("/health/live", (req, res) => {
     res.status(200).json({ status: "alive" });
@@ -51,5 +53,8 @@ app.get("/health/ready", (req, res) => {
 app.use("/api", indexRoute);
 
 app.get("/", indexRoute);
+
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 export default app;

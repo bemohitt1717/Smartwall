@@ -59,6 +59,8 @@ export default function useCanvaEditor(image) {
   const [walls, setWalls] = useState([]);
   const [selectedWallId, setSelectedWallId] = useState(null);
   const [draftWall, setDraftWall] = useState(null);
+  const [hoveredPointIndex, setHoveredPointIndex] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Color state
   const [previewColor, setPreviewColor] = useState(EDITOR_CONFIG.DEFAULT_PREVIEW.COLOR);
@@ -244,6 +246,7 @@ export default function useCanvaEditor(image) {
     createMouseDownHandler({
       canvasRef,
       mode, // ADD: Pass mode
+      isDrawing,
       draftWall,
       selectedWallId,
       walls,
@@ -252,9 +255,11 @@ export default function useCanvaEditor(image) {
       dragWallIdRef,
       dragWallRef,
       dragStartPosRef,
+      hasMovedRef,
+      setIsDragging,
       recordHistory, // Pass history recording
     }),
-    [mode, draftWall, selectedWallId, walls, recordHistory]
+    [mode, draftWall, selectedWallId, walls, isDrawing, recordHistory]
   );
 
   const handleMouseMove = useCallback(
@@ -267,10 +272,13 @@ export default function useCanvaEditor(image) {
       dragWallIdRef,
       dragPointIndexRef,
       hasMovedRef,
+      selectedWallId,
+      walls,
+      setHoveredPointIndex,
       setDraftWall,
       setWalls,
     }),
-    [draftWall]
+    [draftWall, selectedWallId, walls]
   );
 
   const handleMouseUp = useCallback(
@@ -281,6 +289,8 @@ export default function useCanvaEditor(image) {
       dragWallRef,
       dragStartPosRef,
       hasMovedRef,
+      setIsDragging,
+      setHoveredPointIndex,
     }),
     []
   );
@@ -428,9 +438,9 @@ export default function useCanvaEditor(image) {
       isDrawing,
       previewColor,
       isCompareMode,
-      mode, // Pass mode to drawing function
+      hoveredPointIndex,
     });
-  }, [walls, draftWall, currentPoints, selectedWallId, isDrawing, previewColor, isCompareMode, mode]);
+  }, [walls, draftWall, currentPoints, selectedWallId, isDrawing, previewColor, isCompareMode, hoveredPointIndex]);
 
   // ============================================
   // EFFECTS
@@ -536,6 +546,8 @@ export default function useCanvaEditor(image) {
     allWalls,
     draftWall,
     selectedWallId,
+    hoveredPointIndex,
+    isDragging,
     isPolygonClosed,
     previewColor,
     previewOpacity,

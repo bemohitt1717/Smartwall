@@ -1,4 +1,5 @@
-import { getCanvasCoordinates } from '../geometry';
+import { getCanvasCoordinates, getCanvasDisplayScale, getNearbyControlPoint } from '../geometry';
+import { EDITOR_CONFIG } from '../constants';
 
 /**
  * Handles mouse move events
@@ -13,17 +14,38 @@ export function createMouseMoveHandler({
   dragWallIdRef,
   dragPointIndexRef,
   hasMovedRef,
+  selectedWallId,
+  walls,
+  setHoveredPointIndex,
   setDraftWall,
   setWalls,
 }) {
   return (e) => {
-    if (!isDraggingRef.current) return;
+    const coords = getCanvasCoordinates(e, canvasRef.current);
+    if (!coords) return;
+
+    if (!isDraggingRef.current) {
+      const selectedWall =
+        draftWall?.id === selectedWallId
+          ? draftWall
+          : walls.find((wall) => wall.id === selectedWallId);
+      const displayScale = getCanvasDisplayScale(canvasRef.current);
+      const pointIndex = selectedWall
+        ? getNearbyControlPoint(
+            coords,
+            selectedWall.points,
+            EDITOR_CONFIG.CONTROL_POINT_HIT_RADIUS / displayScale,
+          )
+        : null;
+
+      setHoveredPointIndex((currentIndex) =>
+        currentIndex === pointIndex ? currentIndex : pointIndex,
+      );
+      return;
+    }
 
     // FIX: Mark that we're actually dragging
     hasMovedRef.current = true;
-
-    const coords = getCanvasCoordinates(e, canvasRef.current);
-    if (!coords) return;
 
     const wallId = dragWallIdRef.current;
     

@@ -13,7 +13,9 @@ const fileFilter = (req, file, cb) => {
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error("Only image files are allowed"), false);
+    const error = new Error("Unsupported image type");
+    error.code = "UNSUPPORTED_IMAGE_TYPE";
+    cb(error, false);
   }
 };
 

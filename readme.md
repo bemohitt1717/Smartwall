@@ -302,6 +302,16 @@ after inactivity; health checks report status but do not keep a free instance
 awake. Use an always-on plan if avoiding cold starts is a production
 requirement.
 
+### API safeguards
+Authentication requests (`/api/user/register`, `/login`, and `/google`) share a
+limit of 10 requests per IP every 15 minutes. Image create/edit uploads share a
+limit of 20 requests per IP every 15 minutes. JSON request bodies are capped at
+1 MB; multipart image uploads retain their separate 10 MB file limit.
+
+The server trusts one reverse-proxy hop so these limits use the client IP on
+Render. Limits currently use an in-memory store per server process; use a
+shared store such as Redis before running multiple backend instances.
+
 ### Important: Update CORS
 After deployment, update `server/app.js` with your frontend URL in CORS origins.
 

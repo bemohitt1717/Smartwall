@@ -1,14 +1,15 @@
-import { getCanvasCoordinates, getNearbyControlPoint, isPointInsidePolygon } from '../geometry';
-import { EDITOR_MODES } from '../constants';
+import { getCanvasCoordinates, getCanvasDisplayScale, getNearbyControlPoint, isPointInsidePolygon } from '../geometry';
+import { EDITOR_CONFIG, EDITOR_MODES } from '../constants';
 
 /**
  * Handles mouse down events
- * Initiates dragging operations for control points or entire walls
- * ONLY in DRAW mode - SELECT mode doesn't allow stretching/dragging
+ * Initiates dragging operations for selected wall points or, in DRAW mode,
+ * the entire selected wall.
  */
 export function createMouseDownHandler({
   canvasRef,
   mode, // ADD: Check current mode
+  isDrawing, // ADD: Check current mode
   draftWall,
   selectedWallId,
   walls,
@@ -17,81 +18,56 @@ export function createMouseDownHandler({
   dragWallIdRef,
   dragWallRef,
   dragStartPosRef,
+  hasMovedRef,
+  setIsDragging,
   recordHistory,
 }) {
   return (e) => {
     const coords = getCanvasCoordinates(e, canvasRef.current);
     if (!coords) return;
 
-    // ============================================
-    // IMPORTANT: Only allow dragging in DRAW mode
-    // SELECT mode = color change only, NO stretching
-    // ============================================
-    if (mode !== EDITOR_MODES.DRAW) {
-      return; // Block all dragging in SELECT mode
+    if (mode === EDITOR_MODES.DRAW && isDrawing) return;
+
+    const selectedWall =
+      draftWall?.id === selectedWallId
+        ? draftWall
+        : walls.find((wall) => wall.id === selectedWallId);
+    if (!selectedWall) return;
+
+    const displayScale = getCanvasDisplayScale(canvasRef.current);
+    const pointIndex = getNearbyControlPoint(
+      coords,
+      selectedWall.points,
+      EDITOR_CONFIG.CONTROL_POINT_HIT_RADIUS / displayScale,
+    );
+
+    if (pointIndex !== null) {
+      recordHistory?.();
+      isDraggingRef.current = true;
+      dragPointIndexRef.current = pointIndex;
+      dragWallIdRef.current = selectedWall.id;
+      dragWallRef.current = false;
+      hasMovedRef.current = true;
+      setIsDragging(true);
+      if (e.currentTarget.setPointerCapture) {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      }
+      return;
     }
 
-    // ============================================
-    // Check draft wall first (DRAW mode only)
-    // ============================================
-    if (draftWall) {
-      const pointIndex = getNearbyControlPoint(coords, draftWall.points);
-      if (pointIndex !== null) {
-        // Record history BEFORE starting drag
-        if (recordHistory) {
-          recordHistory();
-        }
-        isDraggingRef.current = true;
-        dragPointIndexRef.current = pointIndex;
-        dragWallIdRef.current = draftWall.id;
-        dragWallRef.current = false;
-        return;
-      }
-
-      // Check if clicking inside draft wall for entire wall drag
-      if (isPointInsidePolygon(coords, draftWall.points)) {
-        // Record history BEFORE starting drag
-        if (recordHistory) {
-          recordHistory();
-        }
-        isDraggingRef.current = true;
-        dragWallIdRef.current = draftWall.id;
-        dragWallRef.current = true;
-        dragStartPosRef.current = coords;
-        return;
-      }
-    }
-
-    // ============================================
-    // Check selected wall (DRAW mode only)
-    // ============================================
-    const selectedWall = walls.find((wall) => wall.id === selectedWallId);
-    
-    if (selectedWallId && selectedWall) {
-      const pointIndex = getNearbyControlPoint(coords, selectedWall.points);
-      if (pointIndex !== null) {
-        // Record history BEFORE starting drag
-        if (recordHistory) {
-          recordHistory();
-        }
-        isDraggingRef.current = true;
-        dragPointIndexRef.current = pointIndex;
-        dragWallIdRef.current = selectedWallId;
-        dragWallRef.current = false;
-        return;
-      }
-
-      // Check if clicking inside selected wall for entire wall drag
-      if (isPointInsidePolygon(coords, selectedWall.points)) {
-        // Record history BEFORE starting drag
-        if (recordHistory) {
-          recordHistory();
-        }
-        isDraggingRef.current = true;
-        dragWallIdRef.current = selectedWallId;
-        dragWallRef.current = true;
-        dragStartPosRef.current = coords;
-        return;
+    if (
+      mode === EDITOR_MODES.DRAW &&
+      isPointInsidePolygon(coords, selectedWall.points)
+    ) {
+      recordHistory?.();
+      isDraggingRef.current = true;
+      dragWallIdRef.current = selectedWall.id;
+      dragWallRef.current = true;
+      dragStartPosRef.current = coords;
+      hasMovedRef.current = true;
+      setIsDragging(true);
+      if (e.currentTarget.setPointerCapture) {
+        e.currentTarget.setPointerCapture(e.pointerId);
       }
     }
   };

@@ -1,6 +1,7 @@
 import { drawPolygon } from './drawPolygon';
 import { drawControlPoints } from './drawControlPoints';
 import { drawCurrentPolygon } from './drawCurrentPolygon';
+import { getCanvasDisplayScale } from '../geometry';
 
 /**
  * Main canvas rendering function
@@ -18,7 +19,7 @@ export function drawCanvas({
   isDrawing,
   previewColor,
   isCompareMode = false,
-  mode = 'SELECT', // Add mode parameter
+  hoveredPointIndex = null,
 }) {
   if (!canvas || !ctx || !imageRef) return;
 
@@ -41,12 +42,8 @@ export function drawCanvas({
     // Border same as fill color - invisible border effect
     drawPolygon(ctx, wall.points, wall.color, wall.opacity, false, false);
 
-    // Show control points ONLY if:
-    // 1. Wall is selected
-    // 2. In DRAW mode (NOT SELECT mode)
-    // 3. Not currently drawing something else
-    if (isSelected && mode === 'DRAW' && !isDrawing) {
-      drawControlPoints(ctx, wall.points);
+    if (isSelected && !isDrawing) {
+      drawControlPoints(ctx, wall.points, getCanvasDisplayScale(canvas), hoveredPointIndex);
     }
   });
 
@@ -57,9 +54,8 @@ export function drawCanvas({
     // NO thick outline - draft wall also looks finalized
     drawPolygon(ctx, draftWall.points, draftWall.color, draftWall.opacity, false, false);
     
-    // Show control points on draft wall ONLY in DRAW mode
-    if (mode === 'DRAW') {
-      drawControlPoints(ctx, draftWall.points);
+    if (isDraftSelected && !isDrawing) {
+      drawControlPoints(ctx, draftWall.points, getCanvasDisplayScale(canvas), hoveredPointIndex);
     }
   }
 

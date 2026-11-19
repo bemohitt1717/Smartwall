@@ -7,6 +7,9 @@ export const EDITOR_CONFIG = {
   
   // Control point detection threshold (pixels)
   CONTROL_POINT_THRESHOLD: 12,
+
+  // Control point hit area (screen pixels)
+  CONTROL_POINT_HIT_RADIUS: 18,
   
   // Stroke widths
   STROKE_WIDTH: {
@@ -18,14 +21,16 @@ export const EDITOR_CONFIG = {
   // Colors
   COLORS: {
     SELECTED_OUTLINE: '#10B981',  // Green
-    CONTROL_POINT: '#10B981',     // Green
+    CONTROL_POINT: '#6457FF',     // Brand purple
+    CONTROL_POINT_HOVER: '#F59E0B',
+    CONTROL_POINT_OUTLINE: '#0F172A',
     CONTROL_POINT_BORDER: '#fff', // White
     FIRST_POINT: '#10B981',       // Green (larger)
   },
   
   // Control point sizes
   CONTROL_POINT_SIZE: {
-    DEFAULT: 8,
+    DEFAULT: 10,
     FIRST: 10,
   },
   

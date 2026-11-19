@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Image as ImageIcon, Layers } from "lucide-react";
 import { uploadImage } from "../../../../../api/project.api.js";
@@ -14,7 +14,7 @@ export default function ImageCanvas({editor, selectedImage, processFile, onProje
       <div className="w-full h-full flex items-center justify-center">
         <AnimatePresence mode="wait">
           {selectedImage ? (
-            <CanvasPlaceholder image={selectedImage} editor={editor}  />
+            <CanvasPlaceholder editor={editor} />
           ) : (
             <UploadPlaceholder onImageSelect={processFile} onProjectCreated={onProjectCreated} />
           )}
@@ -243,9 +243,10 @@ function UploadingState({ onComplete }) {
  * Canvas Placeholder Component
  * Main editing canvas with zoom, pan, and tool support
  */
-function CanvasPlaceholder({ image, editor }) {
+function CanvasPlaceholder({ editor }) {
   const {canvasRef, handleCanvasClick, handleMouseDown, handleMouseMove, handleMouseUp, zoomLevel, panOffset, mode, setSelectedWallId} = editor;
   const containerRef = useRef(null);
+  const selectedWall = editor.allWalls?.find((wall) => wall.id === editor.selectedWallId);
 
   /**
    * Get cursor style based on current editor mode
@@ -265,6 +266,11 @@ function CanvasPlaceholder({ image, editor }) {
       // Deselect all walls (dots disappear)
       setSelectedWallId(null);
     }
+  };
+
+  const handlePointerLeave = (e) => {
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) return;
+    handleMouseUp();
   };
 
   return (
@@ -290,7 +296,9 @@ function CanvasPlaceholder({ image, editor }) {
           Your Room Canvas
         </h3>
         <p className="text-sm text-slate-600">
-          {mode === 'DRAW' 
+          {selectedWall
+            ? "Drag the purple points to reshape this wall"
+            : mode === 'DRAW'
             ? 'Click to add points, close the shape to create a wall'
             : 'Select walls to edit colors and properties'}
         </p>
@@ -308,12 +316,20 @@ function CanvasPlaceholder({ image, editor }) {
           <canvas
             ref={canvasRef}
             onClick={handleCanvasClick}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
+            onPointerDown={handleMouseDown}
+            onPointerMove={handleMouseMove}
+            onPointerUp={handleMouseUp}
+            onPointerCancel={handleMouseUp}
+            onPointerLeave={handlePointerLeave}
             className="max-w-full max-h-full object-contain rounded-xl"
-            style={{ cursor: getCursor() }}
+            style={{
+              cursor: editor.isDragging
+                ? "grabbing"
+                : editor.hoveredPointIndex !== null
+                  ? "pointer"
+                  : getCursor(),
+              touchAction: "none",
+            }}
           />
         </div>
       </div>

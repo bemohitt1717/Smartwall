@@ -9,6 +9,8 @@ export function createMouseUpHandler({
   dragWallRef,
   dragStartPosRef,
   hasMovedRef,
+  setIsDragging,
+  setHoveredPointIndex,
 }) {
   return () => {
     // Reset drag state
@@ -17,6 +19,8 @@ export function createMouseUpHandler({
     dragWallIdRef.current = null;
     dragWallRef.current = false;
     dragStartPosRef.current = null;
+    setIsDragging(false);
+    setHoveredPointIndex(null);
     
     // FIX: Reset movement flag after a tiny delay to let onClick fire first
     setTimeout(() => {
