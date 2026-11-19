@@ -16,6 +16,7 @@ export const EDITOR_CONFIG = {
     DEFAULT: 4,
     SELECTED: 6,
     DRAFT: 6,
+    DRAWING: 5,
   },
   
   // Colors

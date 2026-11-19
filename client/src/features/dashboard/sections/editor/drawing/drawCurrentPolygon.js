@@ -18,7 +18,7 @@ export function drawCurrentPolygon(ctx, points, previewColor) {
   });
 
   ctx.strokeStyle = previewColor;
-  ctx.lineWidth = EDITOR_CONFIG.STROKE_WIDTH.DEFAULT;
+  ctx.lineWidth = EDITOR_CONFIG.STROKE_WIDTH.DRAWING;
   ctx.stroke();
 
   // Draw control points

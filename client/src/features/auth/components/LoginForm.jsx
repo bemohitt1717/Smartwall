@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Eye, EyeOff, LoaderCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -120,10 +120,29 @@ function AuthInput({ error, className, ...props }) {
 export default function LoginForm() {
   const [mode, setMode] = useState("login");
   const [showPassword, setShowPassword] = useState(false);
+  const [googleButtonWidth, setGoogleButtonWidth] = useState(0);
+  const googleButtonContainerRef = useRef(null);
   const reduceMotion = useReducedMotion();
   const copy = modeCopy[mode];
   const { loadProfile } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const container = googleButtonContainerRef.current;
+    if (!container) return;
+
+    const updateWidth = () => {
+      setGoogleButtonWidth(
+        Math.min(Math.floor(container.getBoundingClientRect().width), 400),
+      );
+    };
+
+    updateWidth();
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, [mode]);
 
   const {
     register,
@@ -313,23 +332,28 @@ export default function LoginForm() {
           >
             {mode !== "forgot" ? (
               <>
-                <div className="relative">
+                <div
+                  ref={googleButtonContainerRef}
+                  className="relative"
+                >
                   {/* Hidden default Google button - preserves all OAuth functionality */}
-                  <div className="google-login-hit-area pointer-events-auto absolute inset-0 z-10 opacity-0">
-                    <GoogleLogin
-                      onSuccess={handleGoogleSuccess}
-                      onError={handleGoogleError}
-                      useOneTap
-                      width="100%"
-                      size="large"
-                      theme="outline"
-                      shape="rectangular"
-                    />
-                  </div>
+                  {googleButtonWidth > 0 ? (
+                    <div className="google-login-hit-area pointer-events-auto absolute inset-0 z-10 flex items-center justify-center opacity-0">
+                      <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
+                        onError={handleGoogleError}
+                        useOneTap
+                        width={String(googleButtonWidth)}
+                        size="large"
+                        theme="outline"
+                        shape="rectangular"
+                      />
+                    </div>
+                  ) : null}
 
                   {/* Custom styled overlay - blends with theme */}
                   <div
-                    className="relative z-0 group flex h-14 w-full items-center justify-center gap-3 rounded-[12px] border border-[#ddd7da] bg-[#fffefe] px-4 text-[15px] tracking-[-0.01em] text-[#211d22] outline-none transition-all duration-150 ease-out hover:border-[#6e4d82] hover:bg-white hover:shadow-[0_4px_16px_rgba(110,77,130,0.12)] focus-within:border-[#6e4d82] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#6e4d82]/12 active:scale-[0.97] active:shadow-[0_2px_6px_rgba(110,77,130,0.08)] cursor-pointer"
+                    className="relative z-0 group flex h-10 w-full items-center justify-center gap-3 rounded-[12px] border border-[#ddd7da] bg-[#fffefe] px-4 text-[15px] tracking-[-0.01em] text-[#211d22] outline-none transition-all duration-150 ease-out hover:border-[#6e4d82] hover:bg-white hover:shadow-[0_4px_16px_rgba(110,77,130,0.12)] focus-within:border-[#6e4d82] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#6e4d82]/12 active:scale-[0.97] active:shadow-[0_2px_6px_rgba(110,77,130,0.08)] cursor-pointer"
                     role="button"
                     tabIndex={-1}
                     aria-label={
